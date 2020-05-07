@@ -319,7 +319,7 @@ Pass your parsed `package.json` object as `appPackage`, your the URL where you p
 
 ```js
 const appPackage = require(paths.appPackageJson);
-const publicUrl = paths.publicUrlOrPath;
+const publicUrl = paths.publicUrlOrPath();
 const publicPath = config.output.publicPath;
 printHostingInstructions(appPackage, publicUrl, publicPath, 'build', true);
 ```

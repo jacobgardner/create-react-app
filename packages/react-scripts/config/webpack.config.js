@@ -24,7 +24,7 @@ const ManifestPlugin = require('webpack-manifest-plugin');
 const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin');
 const WorkboxWebpackPlugin = require('workbox-webpack-plugin');
 const WatchMissingNodeModulesPlugin = require('react-dev-utils/WatchMissingNodeModulesPlugin');
-const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
+// const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
 const getCSSModuleLocalIdent = require('react-dev-utils/getCSSModuleLocalIdent');
 const paths = require('./paths');
 const modules = require('./modules');
@@ -36,6 +36,25 @@ const typescriptFormatter = require('react-dev-utils/typescriptFormatter');
 const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
 // @remove-on-eject-end
 const postcssNormalize = require('postcss-normalize');
+let webpackOverrides = {
+  aliases() {
+    return {};
+  },
+  env() {
+    return {};
+  },
+};
+try {
+  webpackOverrides = {
+    ...webpackOverrides,
+    ...require(paths.appWebpackOverrides),
+  };
+} catch (err) {
+  console.log(
+    `Unable to find webpack overrides at: ${paths.appWebpackOverrides}`
+  );
+  console.log(err);
+}
 
 const appPackageJson = require(paths.appPackageJson);
 
@@ -65,6 +84,11 @@ const sassModuleRegex = /\.module\.(scss|sass)$/;
 module.exports = function(webpackEnv) {
   const isEnvDevelopment = webpackEnv === 'development';
   const isEnvProduction = webpackEnv === 'production';
+  for (const [key, value] of Object.entries(
+    webpackOverrides.env(isEnvProduction)
+  )) {
+    process.env[key] = value;
+  }
 
   // Variable used for enabling profiling in Production
   // passed into alias object. Uses a flag if passed into the build command
@@ -75,7 +99,10 @@ module.exports = function(webpackEnv) {
   // as %PUBLIC_URL% in `index.html` and `process.env.PUBLIC_URL` in JavaScript.
   // Omit trailing slash as %PUBLIC_URL%/xyz looks better than %PUBLIC_URL%xyz.
   // Get environment variables to inject into our app.
-  const env = getClientEnvironment(paths.publicUrlOrPath.slice(0, -1));
+  const env = getClientEnvironment(
+    paths.publicUrlOrPath().slice(0, -1),
+    webpackOverrides.env(isEnvProduction)
+  );
 
   // common function to get style loaders
   const getStyleLoaders = (cssOptions, preProcessor) => {
@@ -85,7 +112,7 @@ module.exports = function(webpackEnv) {
         loader: MiniCssExtractPlugin.loader,
         // css is located in `static/css`, use '../../' to locate index.html folder
         // in production `paths.publicUrlOrPath` can be a relative path
-        options: paths.publicUrlOrPath.startsWith('.')
+        options: paths.publicUrlOrPath().startsWith('.')
           ? { publicPath: '../../' }
           : {},
       },
@@ -187,7 +214,7 @@ module.exports = function(webpackEnv) {
       // webpack uses `publicPath` to determine where the app is being served from.
       // It requires a trailing slash, or the file assets will get an incorrect path.
       // We inferred the "public path" (such as / or /my-project) from homepage.
-      publicPath: paths.publicUrlOrPath,
+      publicPath: paths.publicUrlOrPath(),
       // Point sourcemap entries to original disk location (format as URL on Windows)
       devtoolModuleFilenameTemplate: isEnvProduction
         ? info =>
@@ -299,6 +326,7 @@ module.exports = function(webpackEnv) {
         .map(ext => `.${ext}`)
         .filter(ext => useTypeScript || !ext.includes('ts')),
       alias: {
+        ...webpackOverrides.aliases(),
         // Support React Native Web
         // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
         'react-native': 'react-native-web',
@@ -320,8 +348,10 @@ module.exports = function(webpackEnv) {
         // This often causes confusion because we only process files within src/ with babel.
         // To fix this, we prevent you from importing files out of src/ -- if you'd like to,
         // please link the files into your node_modules/ and let module-resolution kick in.
-        // Make sure your source files are compiled, as they will not be processed in any way.
-        new ModuleScopePlugin(paths.appSrc, [paths.appPackageJson]),
+        // Make sure your source files are compiled, as they will not be
+        // processed in any way.
+        // Disabled because tsconfig can't resolve paths for hoisted dependencies...
+        // new ModuleScopePlugin(paths.appSrc, [paths.appPackageJson]),
       ],
     },
     resolveLoader: {
@@ -602,7 +632,7 @@ module.exports = function(webpackEnv) {
       // See https://github.com/facebook/create-react-app/issues/240
       isEnvDevelopment && new CaseSensitivePathsPlugin(),
       // If you require a missing module and then `npm install` it, you still have
-      // to restart the development server for Webpack to discover it. This plugin
+      // to restart the development server fo to discover it. This plugin
       // makes the discovery automatic so you don't have to restart.
       // See https://github.com/facebook/create-react-app/issues/186
       isEnvDevelopment &&
@@ -622,7 +652,7 @@ module.exports = function(webpackEnv) {
       //   can be used to reconstruct the HTML if necessary
       new ManifestPlugin({
         fileName: 'asset-manifest.json',
-        publicPath: paths.publicUrlOrPath,
+        publicPath: paths.publicUrlOrPath(),
         generate: (seed, files, entrypoints) => {
           const manifestFiles = files.reduce((manifest, file) => {
             manifest[file.name] = file.path;
@@ -651,7 +681,7 @@ module.exports = function(webpackEnv) {
           clientsClaim: true,
           exclude: [/\.map$/, /asset-manifest\.json$/],
           importWorkboxFrom: 'cdn',
-          navigateFallback: paths.publicUrlOrPath + 'index.html',
+          navigateFallback: paths.publicUrlOrPath() + 'index.html',
           navigateFallbackBlacklist: [
             // Exclude URLs starting with /_, as they're likely an API call
             new RegExp('^/_'),

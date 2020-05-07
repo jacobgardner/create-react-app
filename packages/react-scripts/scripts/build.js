@@ -27,8 +27,6 @@ const verifyPackageTree = require('./utils/verifyPackageTree');
 if (process.env.SKIP_PREFLIGHT_CHECK !== 'true') {
   verifyPackageTree();
 }
-const verifyTypeScriptSetup = require('./utils/verifyTypeScriptSetup');
-verifyTypeScriptSetup();
 // @remove-on-eject-end
 
 const path = require('path');
@@ -110,7 +108,7 @@ checkBrowsers(paths.appPath, isInteractive)
       console.log();
 
       const appPackage = require(paths.appPackageJson);
-      const publicUrl = paths.publicUrlOrPath;
+      const publicUrl = paths.publicUrlOrPath();
       const publicPath = config.output.publicPath;
       const buildFolder = path.relative(process.cwd(), paths.appBuild);
       printHostingInstructions(
