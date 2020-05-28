@@ -37,6 +37,9 @@ const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
 // @remove-on-eject-end
 const postcssNormalize = require('postcss-normalize');
 let webpackOverrides = {
+  babelOptions() {
+    return {};
+  },
   aliases() {
     return {};
   },
@@ -389,13 +392,17 @@ module.exports = function(webpackEnv) {
               include: paths.appSrc,
               loader: require.resolve('babel-loader'),
               options: {
+                ...webpackOverrides.babelOptions(),
                 customize: require.resolve(
                   'babel-preset-react-app/webpack-overrides'
                 ),
                 // @remove-on-eject-begin
                 babelrc: false,
                 configFile: false,
-                presets: [require.resolve('babel-preset-react-app')],
+                presets: [
+                  require.resolve('babel-preset-react-app'),
+                  ...webpackOverrides.babelOptions().presets,
+                ],
                 // Make sure we have a unique cache identifier, erring on the
                 // side of caution.
                 // We remove this when the user ejects because the default
