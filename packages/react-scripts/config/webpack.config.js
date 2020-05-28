@@ -38,7 +38,10 @@ const getCacheIdentifier = require('react-dev-utils/getCacheIdentifier');
 const postcssNormalize = require('postcss-normalize');
 let webpackOverrides = {
   babelOptions() {
-    return {};
+    return {
+      plugins: [],
+      presets: [],
+    };
   },
   aliases() {
     return {};
