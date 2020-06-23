@@ -8,7 +8,6 @@ module.exports.triggerScript = (script, nodeArgs = [], scriptArgs = []) => {
     const spawnArgs = nodeArgs
       .concat(require.resolve('./scripts/' + script))
       .concat(scriptArgs);
-    console.log(spawnArgs, script, nodeArgs, scriptArgs);
     const result = spawn.sync('node', spawnArgs, { stdio: 'inherit' });
     if (result.signal) {
       if (result.signal === 'SIGKILL') {

@@ -17,7 +17,39 @@ const redirectServedPath = require('react-dev-utils/redirectServedPathMiddleware
 const paths = require('./paths');
 const getHttpsConfig = require('./getHttpsConfig');
 
+let webpackOverrides = {
+  babelOptions() {
+    return {
+      plugins: [],
+      presets: [],
+    };
+  },
+  aliases() {
+    return {};
+  },
+  env() {
+    return {};
+  },
+};
+try {
+  webpackOverrides = {
+    ...webpackOverrides,
+    ...require(paths.appWebpackOverrides),
+  };
+} catch (err) {
+  console.log(
+    `Unable to find webpack overrides at: ${paths.appWebpackOverrides}`
+  );
+  console.log(err);
+}
+
+const env = webpackOverrides.env();
+for (const key of Object.keys(env)) {
+  process.env[key] = env[key];
+}
+
 const host = process.env.HOST || '0.0.0.0';
+
 const sockHost = process.env.WDS_SOCKET_HOST;
 const sockPath = process.env.WDS_SOCKET_PATH; // default: '/sockjs-node'
 const sockPort = process.env.WDS_SOCKET_PORT;
